@@ -3,76 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Stream</title>
+    <title>Counter-Cultural Stream (FLV/HLS)</title>
     <style>
-        /* Базовые стили для центрирования и адаптивности плеера */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #f0f0f0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: sans-serif;
-        }
-        .player-container {
-            position: relative;
-            width: 100%;
-            max-width: 900px; /* Максимальная ширина на десктопе */
-            aspect-ratio: 16 / 9; /* Сохраняем соотношение сторон 16:9 */
-            background-color: #000;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        /* Стили для подсказки о включении звука */
-        .unmute-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            font-size: 1.2em;
-            cursor: pointer;
-            text-align: center;
-            /* Убираем transition, так как display не анимируется */
-        }
+        body { margin: 0; background-color: #222; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; }
+        .player-container { position: relative; width: 100%; max-width: 900px; aspect-ratio: 16 / 9; background-color: #000; }
+        video { width: 100%; height: 100%; display: block; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background-color: rgba(0, 0, 0, 0.6); color: white; font-size: 1.2em; cursor: pointer; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="player-container">
-        <!-- Элемент video, куда будет загружаться стрим -->
         <video id="videoPlayer" controls autoplay muted playsinline></video>
-        
-        <!-- Подсказка для включения звука -->
-        <div id="unmuteOverlay" class="unmute-overlay">
+        <div id="statusOverlay" class="overlay">
             <span>Нажмите, чтобы включить звук</span>
         </div>
     </div>
 
-    <!-- Подключение библиотек для проигрывания видео -->
+    <!-- Подключаем библиотеки -->
     <script src="https://cdn.jsdelivr.net/npm/flv.js@1.6.2/dist/flv.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
     <script>
-        // --- НАСТРОЙКИ ---
-        const baseStreamUrl = 'https://permanently-allowed-bandicoot.cloudpub.ru/live/livestream';
-        const flvUrl = `${baseStreamUrl}.flv`;
-        const hlsUrl = `${baseStreamUrl}.m3u8`;
+        (async function() {
+            // Используем твой основной домен, который пробрасывает cloudpub
+            const baseStreamUrl = 'https://permanently-allowed-bandicoot.cloudpub.ru/live/livestream';
+            const flvUrl = `${baseStreamUrl}.flv`;
+            const hlsUrl = `${baseStreamUrl}.m3u8`;
 
-        // --- ЛОГИКА ПЛЕЕРА ---
-        document.addEventListener('DOMContentLoaded', () => {
             const videoElement = document.getElementById('videoPlayer');
-            const unmuteOverlay = document.getElementById('unmuteOverlay');
+            const statusOverlay = document.getElementById('statusOverlay');
 
             // 1. Определение типа устройства/браузера
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -92,29 +52,22 @@
                 flvPlayer.attachMediaElement(videoElement);
                 flvPlayer.load();
             } else {
-                // Если ничего не поддерживается
                 console.error('Ваш браузер не поддерживает ни HLS, ни FLV.js');
-                unmuteOverlay.innerHTML = '<span>Ошибка: формат видео не поддерживается</span>';
-                unmuteOverlay.style.cursor = 'default';
-                return; // Прерываем выполнение скрипта
+                statusOverlay.innerHTML = '<span>Ошибка: формат видео не поддерживается</span>';
+                statusOverlay.style.cursor = 'default';
+                return;
             }
 
             // 2. Логика включения звука по первому клику
-            function unmuteAndPlay() {
+            const unmuteHandler = () => {
                 videoElement.muted = false;
-                
-                // Полностью убираем оверлей, а не делаем его прозрачным
-                unmuteOverlay.style.display = 'none'; 
-                
-                // Удаляем обработчик после первого срабатывания
-                document.body.removeEventListener('click', unmuteAndPlay);
-                document.body.removeEventListener('touchend', unmuteAndPlay);
-            }
-
-            // Добавляем обработчики на клик или тап
-            document.body.addEventListener('click', unmuteAndPlay);
-            document.body.addEventListener('touchend', unmuteAndPlay);
-        });
+                statusOverlay.style.display = 'none';
+                document.body.removeEventListener('click', unmuteHandler);
+                document.body.removeEventListener('touchend', unmuteHandler);
+            };
+            document.body.addEventListener('click', unmuteHandler);
+            document.body.addEventListener('touchend', unmuteHandler);
+        })();
     </script>
 
 </body>
